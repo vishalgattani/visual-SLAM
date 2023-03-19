@@ -29,7 +29,7 @@ fe = FeatureExtractor(cam)
 def process_frame(img):
     img = cv2.resize(img,(W,H))
     # find the keypoints and descriptors with ORB
-    matches = fe.extract(img)
+    matches,pose = fe.extract(img)
     print(len(matches),"matches")
 
     for p1,p2 in matches:

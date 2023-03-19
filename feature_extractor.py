@@ -14,7 +14,7 @@ def add_ones(x):
 
 def extractRt(E):
     #computing cameras from E, finding multiple solutions of rotational and translational matrix?
-    Printer.green(E)
+    # Printer.green(E)
     U,D,Vt = np.linalg.svd(E)
     assert np.linalg.det(U)>0
     if np.linalg.det(Vt) < 0:
@@ -25,7 +25,9 @@ def extractRt(E):
     if np.sum(R.diagonal()<0):
         R = np.dot(np.dot(U,W.T),Vt)
     t = U[:,2] #u3 normalized.
-    return R,t
+    pose = np.concatenate([R,t.reshape(1,3)],axis=0)
+    Printer.green(pose)
+    return pose
 
 class FeatureExtractor(object):
     def __init__(self,K) -> None:
@@ -75,6 +77,7 @@ class FeatureExtractor(object):
         #filter
         # how ponts correspond to each other is governed by fundamental matrix
         # Estimate the epipolar geometry between the left and right image.
+        pose = None
         if len(ret)>0:
             ret = np.array(ret)
 
@@ -90,8 +93,8 @@ class FeatureExtractor(object):
                             max_trials=1000)
             ret = ret[inliers]
             #extract rotational and translational matrices
-            R,t = extractRt(model.params)
+            pose = extractRt(model.params)
 
 
         self.last = {"kps":kps,"des":des}
-        return ret
+        return ret,pose
