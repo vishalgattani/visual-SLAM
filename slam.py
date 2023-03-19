@@ -1,25 +1,29 @@
 
 
 import sys
+from utils_sys import Printer
 if sys.version_info[0] != 3:
-    print("This script requires Python 3.")
+    Printer.orange("This script requires Python 3.")
     exit()
 else:
-    print("Python 3 exists.")
+    Printer.orange("Python 3 exists.")
 
 import numpy as np
 import cv2
 
 from feature_extractor import FeatureExtractor
 
-W = 1920//2
-H = 1080//2
+W = 1241//2
+H = 376//2
+fx = 718.856
+fy = 718.856
+cx = 607.1928
+cy = 185.2157
 
-F = 1
-K = np.array([[F,0,W//2],[0,F,H//2],[0,0,1]])
+cam = np.array([[fx,0,W//2],[0,fy,H//2],[0,0,1]])
 
 
-fe = FeatureExtractor(K)
+fe = FeatureExtractor(cam)
 
 
 def process_frame(img):
@@ -39,7 +43,7 @@ def process_frame(img):
 if __name__ == "__main__":
 
     # record video input
-    cap = cv2.VideoCapture("test_countryroad.mp4")
+    cap = cv2.VideoCapture("./video/kitti_00.mp4")
     while cap.isOpened():
         ret,frame = cap.read()
         if ret:
