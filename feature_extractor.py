@@ -25,9 +25,9 @@ def extractRt(E):
     if np.sum(R.diagonal()<0):
         R = np.dot(np.dot(U,W.T),Vt)
     t = U[:,2] #u3 normalized.
-    pose = np.concatenate([R,t.reshape(1,3)],axis=0)
+    Rt = np.concatenate([R,t.reshape(1,3)],axis=0)
     Printer.green(pose)
-    return pose
+    return Rt
 
 class FeatureExtractor(object):
     def __init__(self,K) -> None:
@@ -77,7 +77,7 @@ class FeatureExtractor(object):
         #filter
         # how ponts correspond to each other is governed by fundamental matrix
         # Estimate the epipolar geometry between the left and right image.
-        pose = None
+        Rt = None
         if len(ret)>0:
             ret = np.array(ret)
 
@@ -93,8 +93,8 @@ class FeatureExtractor(object):
                             max_trials=1000)
             ret = ret[inliers]
             #extract rotational and translational matrices
-            pose = extractRt(model.params)
+            Rt = extractRt(model.params)
 
 
         self.last = {"kps":kps,"des":des}
-        return ret,pose
+        return ret,Rt
