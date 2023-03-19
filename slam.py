@@ -19,7 +19,7 @@ orb = cv2.ORB_create()
 class FeatureExtractor(object):
     def __init__(self) -> None:
         self.orb = cv2.ORB_create(100)
-        self.bf = cv2.BFMatcher()
+        self.bf = cv2.BFMatcher(cv2.NORM_HAMMING)
         self.last = None
 
     def extract(self,img):
@@ -29,22 +29,28 @@ class FeatureExtractor(object):
         kps = [cv2.KeyPoint(x=f[0][0],y=f[0][1],size=20) for f in features]
         kps,des = self.orb.compute(img,kps)
         # matching
-        matches = None
+        ret = []
         if self.last is not None:
-            matches = self.bf.match(des,self.last['des'])
+            matches = self.bf.knnMatch(des,self.last['des'],k=2)
+            for m,n in matches:
+                if m.distance < 0.75*n.distance:
+                    ret.append((kps[m.queryIdx],self.last["kps"][m.trainIdx]))
 
         self.last = {"kps":kps,"des":des}
-        return kps,des,matches
+        return ret
 
 fe = FeatureExtractor()
 
 def process_frame(img):
     img = cv2.resize(img,(W,H))
     # find the keypoints and descriptors with ORB
-    kp, des, matches = fe.extract(img)
-    for p in kp:
-        u,v = map(lambda u:int(round(u)),p.pt)
-        cv2.circle(img,(u,v),color=(0,255,0),radius=3)
+    matches = fe.extract(img)
+
+    for p1,p2 in matches:
+        u1,v1 = map(lambda u:int(round(u)),p1.pt)
+        u2,v2 = map(lambda u:int(round(u)),p2.pt)
+        cv2.circle(img,(u1,v1),color=(0,255,0),radius=3)
+        cv2.line(img,(u1,v1),(u2,v2),color=(255,0,0))
     cv2.imshow("visual-SLAM",img)
 
 
