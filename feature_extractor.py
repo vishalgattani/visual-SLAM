@@ -11,6 +11,22 @@ from skimage.transform import EssentialMatrixTransform
 def add_ones(x):
    return  np.concatenate([x,np.ones((x.shape[0],1))],axis=1)
 
+
+def extractRt(E):
+    #computing cameras from E, finding multiple solutions of rotational and translational matrix?
+    Printer.green(E)
+    U,D,Vt = np.linalg.svd(E)
+    assert np.linalg.det(U)>0
+    if np.linalg.det(Vt) < 0:
+        Vt *= -1.0
+    #Find R and T from Hartley & Zisserman
+    W=np.mat([[0,-1,0],[1,0,0],[0,0,1]],dtype=float)
+    R = np.dot(np.dot(U,W),Vt)
+    if np.sum(R.diagonal()<0):
+        R = np.dot(np.dot(U,W.T),Vt)
+    t = U[:,2] #u3 normalized.
+    return R,t
+
 class FeatureExtractor(object):
     def __init__(self,K) -> None:
         # orb descriptor
@@ -28,6 +44,7 @@ class FeatureExtractor(object):
     def denormalize(self,pt):
         ret = np.dot(self.K,np.array([pt[0],pt[1],1.0]))
         return int(round(ret[0])),int(round(ret[1]))
+
 
     def extract(self,img):
 
@@ -72,10 +89,9 @@ class FeatureExtractor(object):
                             residual_threshold=0.0015,
                             max_trials=1000)
             ret = ret[inliers]
+            #extract rotational and translational matrices
+            R,t = extractRt(model.params)
 
-            #computing cameras from E, finding multiple solutions of rotational and translational matrix?
-            Printer.green(model.params)
-            s,v,d = np.linalg.svd(model.params)
 
         self.last = {"kps":kps,"des":des}
         return ret
