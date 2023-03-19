@@ -1,9 +1,12 @@
 import numpy as np
 import cv2
+from utils_sys import Printer
 from skimage.measure import ransac
 from skimage.feature import match_descriptors, ORB, plot_matches
 from skimage.measure import ransac
 from skimage.transform import FundamentalMatrixTransform
+from skimage.transform import EssentialMatrixTransform
+
 
 def add_ones(x):
    return  np.concatenate([x,np.ones((x.shape[0],1))],axis=1)
@@ -39,11 +42,13 @@ class FeatureExtractor(object):
 
         # matching
         ret = []
+        pts1 = []
+        pts2 = []
         if self.last is not None:
             matches = self.bf.knnMatch(des,self.last['des'],k=2)
             for m,n in matches:
                 # ratio test as per Lowe's paper
-                if m.distance < 0.8*n.distance:
+                if m.distance < 0.75*n.distance:
                     kp1 = kps[m.queryIdx].pt
                     kp2 = self.last["kps"][m.trainIdx].pt
                     ret.append((kp1,kp2))
@@ -61,10 +66,16 @@ class FeatureExtractor(object):
             ret[:,1,:] = self.normalize(ret[:,1,:])
 
             model, inliers = ransac((ret[:,0],ret[:,1]),
-                            FundamentalMatrixTransform, min_samples=8,
-                            residual_threshold=1, max_trials=1000)
+                            # FundamentalMatrixTransform,
+                            EssentialMatrixTransform,
+                            min_samples=8,
+                            residual_threshold=0.0015,
+                            max_trials=1000)
             ret = ret[inliers]
-            fm = model.params
-            s,v,d = np.linalg.svd(fm)
+
+            #computing cameras from E, finding multiple solutions of rotational and translational matrix?
+            Printer.green(model.params)
+            s,v,d = np.linalg.svd(model.params)
+
         self.last = {"kps":kps,"des":des}
         return ret
