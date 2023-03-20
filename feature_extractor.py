@@ -26,7 +26,6 @@ def extractRt(E):
         R = np.dot(np.dot(U,W.T),Vt)
     t = U[:,2] #u3 normalized.
     Rt = np.concatenate([R,t.reshape(1,3)],axis=0)
-    Printer.green(pose)
     return Rt
 
 class FeatureExtractor(object):
@@ -45,6 +44,7 @@ class FeatureExtractor(object):
 
     def denormalize(self,pt):
         ret = np.dot(self.K,np.array([pt[0],pt[1],1.0]))
+        ret /= ret[2]
         return int(round(ret[0])),int(round(ret[1]))
 
 

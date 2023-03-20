@@ -1,18 +1,18 @@
-
-
+from build.g2opy import g2o
 import sys
 from utils_sys import Printer
 if sys.version_info[0] != 3:
-    Printer.orange("This script requires Python 3.")
+    Printer.red("This script requires Python 3.")
     exit()
 else:
-    Printer.orange("Python 3 exists.")
+    Printer.green("Python 3 exists.")
 
 import numpy as np
 import cv2
 
 from feature_extractor import FeatureExtractor
 
+# camera intrinsics
 W = 1241//2
 H = 376//2
 fx = 718.856
@@ -30,7 +30,9 @@ def process_frame(img):
     img = cv2.resize(img,(W,H))
     # find the keypoints and descriptors with ORB
     matches,Rt = fe.extract(img)
-    print(len(matches),"matches")
+    if Rt is None:
+        return
+    # print(len(matches),"matches")
 
     for p1,p2 in matches:
         u1,v1 = fe.denormalize(p1)
