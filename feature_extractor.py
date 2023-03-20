@@ -62,17 +62,21 @@ def match_frames(f1,f2):
     bf = cv2.BFMatcher(cv2.NORM_HAMMING)
     # matching
     ret = []
+    idx1,idx2 = [], []
     matches = bf.knnMatch(f1.des,f2.des,k=2)
     for m,n in matches:
         # ratio test as per Lowe's paper
         if m.distance < 0.75*n.distance:
             p1 = f1.pts[m.queryIdx]
             p2 = f2.pts[m.trainIdx]
+            idx1.append(m.queryIdx)
+            idx2.append(m.trainIdx)
             ret.append((p1,p2))
 
     assert len(ret)>=8
     ret = np.array(ret)
-
+    idx1 = np.array(idx1)
+    idx2 = np.array(idx2)
     #filter
     # how ponts correspond to each other is governed by fundamental matrix
     # Estimate the epipolar geometry between the left and right image.
@@ -86,7 +90,7 @@ def match_frames(f1,f2):
     ret = ret[inliers]
     #extract rotational and translational matrices
     Rt = extractRt(model.params)
-    return ret,Rt
+    return idx1[inliers],idx2[inliers],Rt
 
 class Frame(object):
     def __init__(self,img,K) -> None:
