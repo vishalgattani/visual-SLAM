@@ -10,7 +10,7 @@ else:
 import numpy as np
 import cv2
 
-from feature_extractor import FeatureExtractor
+from feature_extractor import Frame, denormalize, match
 
 # camera intrinsics
 W = 1241//2
@@ -22,21 +22,20 @@ cy = 185.2157
 
 cam = np.array([[fx,0,W//2],[0,fy,H//2],[0,0,1]])
 
-
-fe = FeatureExtractor(cam)
-
-
+frames = []
 def process_frame(img):
     img = cv2.resize(img,(W,H))
-    # find the keypoints and descriptors with ORB
-    matches,Rt = fe.extract(img)
-    if Rt is None:
+    frame = Frame(img,cam)
+    frames.append(frame)
+    if len(frames)<=1:
         return
-    # print(len(matches),"matches")
+    # find the keypoints and descriptors with ORB
 
-    for p1,p2 in matches:
-        u1,v1 = fe.denormalize(p1)
-        u2,v2 = fe.denormalize(p2)
+    ret,Rt = match_frames(frames[-1],frames[-2])
+
+    for pt1,pt2 in ret:
+        u1,v1 = denormalize(cam,pt1)
+        u2,v2 = denormalize(cam,pt2)
         cv2.circle(img,(u1,v1),color=(0,255,0),radius=3)
         cv2.line(img,(u1,v1),(u2,v2),color=(255,0,0))
     cv2.imshow("visual-SLAM",img)
