@@ -12,6 +12,17 @@ import cv2
 
 from feature_extractor import Frame, denormalize, match_frames, IRt
 
+class Map():
+    def __init__(self) -> None:
+        self.frames = []
+        self.points = []
+
+    def display(self):
+        for f in self.frames:
+            print(f.id,f.pose)
+
+mapp = Map()
+
 # camera intrinsics
 W = 1241//2
 H = 376//2
@@ -26,33 +37,35 @@ def triangulate(pose1, pose2, pts1, pts2):
   return cv2.triangulatePoints(pose1[:3], pose2[:3], pts1.T, pts2.T).T
 
 class Point(object):
-    def __init__(self,loc) -> None:
+    def __init__(self,mapp,loc) -> None:
         self.frames = []
-        self.loc = loc
+        self.xyz = loc
         self.idxs = []
+        self.id = len(mapp.points)
+        mapp.points.append(self)
 
     def addobs(self,frame,idx):
         self.frames.append(frame)
         # which des in frame index
         self.idxs.append(idx)
 
-frames = []
+
+
 def process_frame(img):
     img = cv2.resize(img,(W,H))
-    frame = Frame(img,cam)
-    frames.append(frame)
-    if len(frames)<=1:
-        frame.pose = IRt
+    frame = Frame(mapp,img,cam)
+    if frame.id<=1:
         return
     # find the keypoints and descriptors with ORB
-
-    idx1,idx2,Rt = match_frames(frames[-1],frames[-2])
+    f1 = mapp.frames[-1]
+    f2 = mapp.frames[-2]
+    idx1,idx2,Rt = match_frames(f1,f2)
     # 3d point cloud - triangulate
 
 
     # Printer.orange(Rt.shape)
-    frames[-1].pose = np.dot(Rt,frames[-2].pose)
-    pts4d = triangulate(frames[-1].pose,frames[-2].pose,frames[-1].pts[idx1],frames[-2].pts[idx2])
+    f1.pose = np.dot(Rt,f2.pose)
+    pts4d = triangulate(f1.pose,f2.pose,f1.pts[idx1],f2.pts[idx2])
     pts4d /= pts4d[:,3:]
     #reject points
     # remove points behind cam if any
@@ -61,17 +74,18 @@ def process_frame(img):
 
     for i,p in enumerate(pts4d):
 
-        pt = Point(p)
-        pt.addobs(frames[-1],idx1[i])
-        pt.addobs(frames[-2],idx2[i])
+        pt = Point(mapp,p)
+        pt.addobs(f1,idx1[i])
+        pt.addobs(f2,idx2[i])
 
-    for pt1,pt2 in zip(frames[-1].pts[idx1],frames[-2].pts[idx2]):
+    for pt1,pt2 in zip(f1.pts[idx1],f2.pts[idx2]):
         u1,v1 = denormalize(cam,pt1)
         u2,v2 = denormalize(cam,pt2)
         cv2.circle(img,(u1,v1),color=(0,255,0),radius=3)
         cv2.line(img,(u1,v1),(u2,v2),color=(255,0,0))
     cv2.imshow("visual-SLAM",img)
 
+    mapp.display()
 
 if __name__ == "__main__":
 
