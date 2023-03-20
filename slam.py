@@ -10,7 +10,7 @@ else:
 import numpy as np
 import cv2
 
-from feature_extractor import Frame, denormalize, match
+from feature_extractor import Frame, denormalize, match_frames, IRt
 
 # camera intrinsics
 W = 1241//2
@@ -28,12 +28,27 @@ def process_frame(img):
     frame = Frame(img,cam)
     frames.append(frame)
     if len(frames)<=1:
+        frame.pose = IRt
         return
     # find the keypoints and descriptors with ORB
 
-    ret,Rt = match_frames(frames[-1],frames[-2])
+    pts,Rt = match_frames(frames[-1],frames[-2])
+    # 3d point cloud - triangulate
 
-    for pt1,pt2 in ret:
+    pts4d = cv2.triangulatePoints(IRt[:3],Rt[:3],pts[:,0].T,pts[:,1].T).T
+    # Printer.orange(Rt.shape)
+    frames[-1].pose = np.dot(Rt,frames[-2].pose)
+
+    #reject points
+    rempts = np.abs(pts4d[:,3])>0.005
+    pts4d = pts4d[rempts]
+    # homogenous 3d
+    pts4d /= pts4d[:,3:]
+    # remove points behind cam if any
+    frontpts4d = pts4d[:,2]>0
+    pts4d = pts4d[frontpts4d]
+
+    for pt1,pt2 in pts:
         u1,v1 = denormalize(cam,pt1)
         u2,v2 = denormalize(cam,pt2)
         cv2.circle(img,(u1,v1),color=(0,255,0),radius=3)
