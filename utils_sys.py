@@ -1,3 +1,6 @@
+# colors happily stolen from
+# https://github.com/MagicLeapResearch/SuperPointPretrainedNetwork/blob/master/demo_superpoint.py
+
 """
 * This file is part of PYSLAM
 *
@@ -17,6 +20,7 @@
 * along with PYSLAM. If not, see <http://www.gnu.org/licenses/>.
 """
 
+
 import sys
 import os
 import numpy as np
@@ -24,7 +28,6 @@ import logging
 from termcolor import colored
 import cv2
 
-# colors from https://github.com/MagicLeapResearch/SuperPointPretrainedNetwork/blob/master/demo_superpoint.py
 myjet = np.array([[0.        , 0.        , 0.5       ],
                   [0.        , 0.        , 0.99910873],
                   [0.        , 0.37843137, 1.        ],
