@@ -8,8 +8,14 @@ from skimage.transform import FundamentalMatrixTransform
 from skimage.transform import EssentialMatrixTransform
 
 
+IRt = np.eye(4)
+
+
 def add_ones(x):
-   return  np.concatenate([x,np.ones((x.shape[0],1))],axis=1)
+  if len(x.shape) == 1:
+    return np.concatenate([x,np.array([1.0])], axis=0)
+  else:
+    return np.concatenate([x, np.ones((x.shape[0], 1))], axis=1)
 
 
 def extractRt(E):
@@ -25,8 +31,12 @@ def extractRt(E):
     if np.sum(R.diagonal()<0):
         R = np.dot(np.dot(U,W.T),Vt)
     t = U[:,2] #u3 normalized.
-    Rt = np.concatenate([R,t.reshape(1,3)],axis=0)
-    return Rt
+    ret = np.eye(4)
+    ret[:3,:3]= R
+    ret[:3,3]= t
+
+    # Rt = np.concatenate([R,t.reshape(3,1)],axis=1)
+    return ret
 
 
 def extract(img):
@@ -81,6 +91,7 @@ def match_frames(f1,f2):
 class Frame(object):
     def __init__(self,img,K) -> None:
         self.K = K
+        self.pose = IRt
         self.Kinv = np.linalg.inv(self.K)
         pts,self.des = extract(img)
         self.pts = normalize(self.Kinv,pts)
