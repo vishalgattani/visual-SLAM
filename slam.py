@@ -1,4 +1,7 @@
 from build.g2opy import g2o
+
+import pypangolin as pango
+from OpenGL.GL import *
 import sys
 from utils_sys import Printer
 if sys.version_info[0] != 3:
