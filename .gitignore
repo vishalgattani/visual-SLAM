@@ -2,6 +2,7 @@ venv/
 tmp/
 video/
 build/
+pangolin/
 .DS_Store
 __pycache__/
 .vscode/settings.json

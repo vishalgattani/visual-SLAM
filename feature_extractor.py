@@ -21,16 +21,16 @@ def add_ones(x):
 def extractRt(E):
     #computing cameras from E, finding multiple solutions of rotational and translational matrix?
     # Printer.green(E)
-    U,D,Vt = np.linalg.svd(E)
-    assert np.linalg.det(U)>0
+    W = np.mat([[0,-1,0],[1,0,0],[0,0,1]],dtype=float)
+    U,d,Vt = np.linalg.svd(E)
+    if np.linalg.det(U) < 0:
+        U *= -1.0
     if np.linalg.det(Vt) < 0:
         Vt *= -1.0
-    #Find R and T from Hartley & Zisserman
-    W=np.mat([[0,-1,0],[1,0,0],[0,0,1]],dtype=float)
-    R = np.dot(np.dot(U,W),Vt)
-    if np.sum(R.diagonal()<0):
-        R = np.dot(np.dot(U,W.T),Vt)
-    t = U[:,2] #u3 normalized.
+    R = np.dot(np.dot(U, W), Vt)
+    if np.sum(R.diagonal()) < 0:
+        R = np.dot(np.dot(U, W.T), Vt)
+    t = U[:, 2]
     ret = np.eye(4)
     ret[:3,:3]= R
     ret[:3,3]= t
@@ -73,7 +73,7 @@ def match_frames(f1,f2):
             idx2.append(m.trainIdx)
             ret.append((p1,p2))
 
-    assert len(ret)>=8
+
     ret = np.array(ret)
     idx1 = np.array(idx1)
     idx2 = np.array(idx2)
@@ -85,7 +85,7 @@ def match_frames(f1,f2):
                     # FundamentalMatrixTransform,
                     EssentialMatrixTransform,
                     min_samples=8,
-                    residual_threshold=0.0015,
+                    residual_threshold=0.025,
                     max_trials=1000)
     ret = ret[inliers]
     #extract rotational and translational matrices
